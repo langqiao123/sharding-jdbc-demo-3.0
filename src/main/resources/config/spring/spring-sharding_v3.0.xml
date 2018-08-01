@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:sharding="http://shardingsphere.io/schema/shardingsphere/sharding"
+       xmlns:master-slave="http://shardingsphere.io/schema/shardingsphere/masterslave"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans 
+                        http://www.springframework.org/schema/beans/spring-beans.xsd 
+                        http://www.springframework.org/schema/context 
+                        http://www.springframework.org/schema/context/spring-context.xsd
+                        http://www.springframework.org/schema/tx 
+                        http://www.springframework.org/schema/tx/spring-tx.xsd
+                        http://shardingsphere.io/schema/shardingsphere/sharding 
+                        http://shardingsphere.io/schema/shardingsphere/sharding/sharding.xsd 
+                        http://shardingsphere.io/schema/shardingsphere/masterslave  
+                        http://shardingsphere.io/schema/shardingsphere/masterslave/master-slave.xsd">
+    <context:annotation-config />
+	<context:component-scan base-package="com.langqiao.sharding.jdbc"/>
+	
+	<bean id="userPreciseDatabaseShardingAlgorithm" class="com.langqiao.sharding.jdbc.algorithm.UserPreciseDatabaseShardingAlgorithm" />
+	<bean id="userPreciseTableShardingAlgorithm" class="com.langqiao.sharding.jdbc.algorithm.UserPreciseTableShardingAlgorithm" />
+	<bean id="listingPreciseDatabaseShardingAlgorithm" class="com.langqiao.sharding.jdbc.algorithm.ListingPreciseDatabaseShardingAlgorithm" />
+	<bean id="listingPreciseTableShardingAlgorithm" class="com.langqiao.sharding.jdbc.algorithm.ListingPreciseTableShardingAlgorithm" />
+    
+	<!-- 分库分表规则器 -->
+    <!-- t_user分表策略 -->
+	<sharding:standard-strategy id="userTableShardingStrategy" sharding-column="user_id" precise-algorithm-ref="userPreciseTableShardingAlgorithm"/>
+    <!-- t_user分库策略 -->
+	<sharding:standard-strategy id="userDatabaseShardingStrategy" sharding-column="user_id" precise-algorithm-ref="userPreciseDatabaseShardingAlgorithm"/>
+    <!-- t_listing分表策略 -->
+	<sharding:standard-strategy id="listingTableShardingStrategy" sharding-column="id" precise-algorithm-ref="listingPreciseTableShardingAlgorithm"/>
+    <!-- t_listing分库策略 -->
+	<sharding:standard-strategy id="listingDatabaseShardingStrategy" sharding-column="id" precise-algorithm-ref="listingPreciseDatabaseShardingAlgorithm"/>
+    
+    <bean id="randomStrategy" class="io.shardingsphere.core.api.algorithm.masterslave.RandomMasterSlaveLoadBalanceAlgorithm" />
+    
+    <master-slave:data-source id="sharding_0" master-data-source-name="sharding_0_master" slave-data-source-names="sharding_0_slave_0, sharding_0_slave_1" strategy-ref="randomStrategy" />
+    <master-slave:data-source id="sharding_1" master-data-source-name="sharding_1_master" slave-data-source-names="sharding_1_slave_0, sharding_1_slave_1" strategy-ref="randomStrategy" />
+    
+    <sharding:data-source id="shardingDataSource">
+        <sharding:sharding-rule data-source-names="sharding_0,sharding_1">
+            <sharding:table-rules>
+                <sharding:table-rule logic-table="t_user" actual-data-nodes="sharding_${0..1}.t_user_${0..2}" database-strategy-ref="userDatabaseShardingStrategy" table-strategy-ref="userTableShardingStrategy" generate-key-column-name="id"/>
+                <sharding:table-rule logic-table="t_listing" actual-data-nodes="sharding_${0..1}.t_listing_${0..1}" database-strategy-ref="listingDatabaseShardingStrategy" table-strategy-ref="listingTableShardingStrategy" generate-key-column-name="id"/>
+            </sharding:table-rules>
+        </sharding:sharding-rule>
+        <sharding:props>
+            <prop key="sql.show">true</prop>
+            <prop key="metrics.enable">true</prop>
+        </sharding:props>
+    </sharding:data-source>
+    
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="basePackage" value="com.langqiao.sharding.jdbc.mapper"/>
+        <property name="sqlSessionFactoryBeanName" value="sqlSessionFactory"/>
+    </bean>
+    
+    <!-- 配置sqlSessionFactory -->
+     <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="dataSource" ref="shardingDataSource"/>
+        <property name="mapperLocations" value="classpath*:config/mapper/*Mapper.xml"/>
+    </bean>
+    
+    <!-- 事务 -->
+    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="shardingDataSource" />
+    </bean>
+    <tx:annotation-driven transaction-manager="transactionManager" />
+</beans>

@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+    xmlns:tx="http://www.springframework.org/schema/tx"
+    xmlns:context="http://www.springframework.org/schema/context"
+    xmlns:rdb="http://www.dangdang.com/schema/ddframe/rdb" 
+    xsi:schemaLocation="http://www.springframework.org/schema/beans 
+                        http://www.springframework.org/schema/beans/spring-beans.xsd
+                        http://www.springframework.org/schema/context 
+                        http://www.springframework.org/schema/context/spring-context.xsd 
+                        http://www.dangdang.com/schema/ddframe/rdb 
+                        http://www.dangdang.com/schema/ddframe/rdb/rdb.xsd 
+						http://www.springframework.org/schema/tx
+	        		    http://www.springframework.org/schema/tx/spring-tx.xsd
+                        ">
+	<context:component-scan base-package="com.langqiao.sharding.jdbc"/>
+	<!-- 分表规则器 -->
+    <!-- t_user分表策略 -->
+	<rdb:strategy id="userTableShardingStrategy" sharding-columns="user_id" algorithm-class="com.langqiao.sharding.jdbc.algorithm.UserSingleKeyTableShardingAlgorithm"/>
+    <!-- t_user分库策略 -->
+	<rdb:strategy id="userDatabaseShardingStrategy" sharding-columns="user_id" algorithm-class="com.langqiao.sharding.jdbc.algorithm.UserSingleKeyDatabaseShardingAlgorithm"/>
+    <!-- t_listing分表策略 -->
+	<rdb:strategy id="listingTableShardingStrategy" sharding-columns="listing_id" algorithm-class="com.langqiao.sharding.jdbc.algorithm.ListingSingleKeyTableShardingAlgorithm"/>
+    <!-- t_listing分库策略 -->
+	<rdb:strategy id="listingDatabaseShardingStrategy" sharding-columns="listing_id" algorithm-class="com.langqiao.sharding.jdbc.algorithm.ListingSingleKeyDatabaseShardingAlgorithm"/>
+        
+    <rdb:data-source id="shardingDataSource">
+        <rdb:sharding-rule data-sources="sharding_0,sharding_1" key-generator-class="com.dangdang.ddframe.rdb.sharding.keygen.DefaultKeyGenerator">
+            <rdb:table-rules>
+                <rdb:table-rule logic-table="t_user" actual-tables="t_user_${0..2}" database-strategy="userDatabaseShardingStrategy" table-strategy="userTableShardingStrategy">
+                	<rdb:generate-key-column column-name="user_id" column-key-generator-class="com.dangdang.ddframe.rdb.sharding.keygen.DefaultKeyGenerator"/>
+           			<rdb:generate-key-column column-name="id"/>
+                </rdb:table-rule>
+                <rdb:table-rule logic-table="t_listing" actual-tables="t_listing_${0..1}" database-strategy="listingDatabaseShardingStrategy" table-strategy="listingTableShardingStrategy">
+           			<rdb:generate-key-column column-name="id"/>
+                </rdb:table-rule>
+            </rdb:table-rules>
+        </rdb:sharding-rule>
+        <rdb:props>
+            <prop key="sql.show">true</prop>
+            <prop key="metrics.enable">true</prop>
+        </rdb:props>
+    </rdb:data-source>
+    
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="basePackage" value="com.langqiao.sharding.jdbc.mapper"/>
+        <property name="sqlSessionFactoryBeanName" value="sqlSessionFactory"/>
+    </bean>
+    
+    <!-- 配置sqlSessionFactory -->
+     <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="dataSource" ref="shardingDataSource"/>
+        <property name="mapperLocations" value="classpath*:config/mapper/*Mapper.xml"/>
+    </bean>
+    
+    <!-- 事务 -->
+    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="shardingDataSource" />
+    </bean>
+    <tx:annotation-driven transaction-manager="transactionManager" />
+</beans>
