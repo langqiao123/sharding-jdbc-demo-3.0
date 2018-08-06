@@ -1,8 +1,8 @@
-# Host: localhost  (Version 5.7.21-log)
+﻿# Host: localhost  (Version 5.7.21-log)
 # Date: 2018-08-06 15:40:18
 # Generator: MySQL-Front 6.0  (Build 2.20)
 
-create database sharding_1_master;
+
 #
 # Structure for table "t_listing_0"
 #
