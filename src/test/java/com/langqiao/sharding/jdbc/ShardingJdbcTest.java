@@ -103,15 +103,22 @@ public class ShardingJdbcTest {
         userService.transactionTestFailure();
     }
     
-    
     @Test
     public void testGenerateKey() {
     	for(int i=0;i<100;i++) {
     		DefaultKeyGenerator keyGenerator = new DefaultKeyGenerator();
-    		Integer id = keyGenerator.generateKey().intValue();
-    		Long id_long = keyGenerator.generateKey().longValue();
-    		System.out.println(keyGenerator.generateKey().toString());
+//    		Integer id = keyGenerator.generateKey().intValue();
+//    		Long id_long = keyGenerator.generateKey().longValue();
+    		System.out.println("ddddddddd:"+keyGenerator.generateKey().toString());
     	}
+    }
+    
+    @Test
+    public void testSingleGenerateKey() {
+		DefaultKeyGenerator keyGenerator = new DefaultKeyGenerator();
+//		Integer id = keyGenerator.generateKey().intValue();
+//		Long id_long = keyGenerator.generateKey().longValue();
+		System.out.println("ddddddddd:"+keyGenerator.generateKey().toString());
     }
     
 }
