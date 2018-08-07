@@ -33,8 +33,8 @@
     <!-- t_listing分库策略 -->
 	<sharding:standard-strategy id="listingDatabaseShardingStrategy" sharding-column="id" precise-algorithm-ref="listingPreciseDatabaseShardingAlgorithm"/>
     
+    <!-- 读写分离配置 -->
     <bean id="randomStrategy" class="io.shardingsphere.core.api.algorithm.masterslave.RandomMasterSlaveLoadBalanceAlgorithm" />
-    
     <master-slave:data-source id="sharding_0" master-data-source-name="sharding_0_master" slave-data-source-names="sharding_0_slave_0, sharding_0_slave_1" strategy-ref="randomStrategy" />
     <master-slave:data-source id="sharding_1" master-data-source-name="sharding_1_master" slave-data-source-names="sharding_1_slave_0, sharding_1_slave_1" strategy-ref="randomStrategy" />
     
@@ -46,11 +46,12 @@
             </sharding:table-rules>
         </sharding:sharding-rule>
         <sharding:props>
+        	<!-- 是否开启sql显示 -->
             <prop key="sql.show">true</prop>
-            <prop key="metrics.enable">true</prop>
         </sharding:props>
     </sharding:data-source>
     
+    <!-- 通过扫描的方式自动加载mapper -->
     <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
         <property name="basePackage" value="com.langqiao.sharding.jdbc.mapper"/>
         <property name="sqlSessionFactoryBeanName" value="sqlSessionFactory"/>

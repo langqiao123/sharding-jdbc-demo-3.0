@@ -85,7 +85,7 @@ public class ShardingJdbcTest {
     
     @Test
     public void testSQLIN(){
-        List<TUserDo> users = userService.findByUserIds(Arrays.asList(18L,2L,0L));
+        List<TUserDo> users = userService.findByUserIds(Arrays.asList(1L,18L,2L,0L));
         if(null != users && !users.isEmpty()){
             for(TUserDo u :users){
                 System.out.println(u);
