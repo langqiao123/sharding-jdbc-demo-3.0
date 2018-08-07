@@ -17,6 +17,7 @@ import com.langqiao.sharding.jdbc.entity.TUserDo;
 import com.langqiao.sharding.jdbc.service.IListingService;
 import com.langqiao.sharding.jdbc.service.IUserService;
 
+import io.shardingsphere.core.api.HintManager;
 import io.shardingsphere.core.keygen.DefaultKeyGenerator;
 
 @RunWith(SpringJUnit4ClassRunner.class)
@@ -101,6 +102,38 @@ public class ShardingJdbcTest {
     @Test(expected = IllegalAccessException.class)
     public void testTransactionTestFailure() throws IllegalAccessException{
         userService.transactionTestFailure();
+    }
+    
+    @Test
+    public void HintManagerTest() {
+
+        HintManager hintManager = HintManager.getInstance() ;
+
+        hintManager.setMasterRouteOnly();
+
+        List<TUserDo> users = userService.findByUserIds(Arrays.asList(13L,2L,0L));
+        if(null != users && !users.isEmpty()){
+            for(TUserDo u :users){
+                System.out.println(u);
+            }
+        }
+        hintManager.close();
+    }
+    
+    @Test
+    public void HintManagerSharding() {
+    	
+    	HintManager hintManager = HintManager.getInstance() ;
+    	
+    	hintManager.addDatabaseShardingValue("t_user", "user_id", 8L);
+		hintManager.addTableShardingValue("t_user", "user_id", 8L);
+		List<TUserDo> users = userService.findAll();
+        if(null != users && !users.isEmpty()){
+            for(TUserDo u :users){
+                System.out.println(u);
+            }
+        }
+    	hintManager.close();
     }
     
     @Test

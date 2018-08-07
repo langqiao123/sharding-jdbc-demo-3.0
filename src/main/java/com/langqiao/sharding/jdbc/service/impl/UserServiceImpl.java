@@ -54,20 +54,22 @@ public class UserServiceImpl implements IUserService {
         tListingDoMapper.insert(listingDo);
     }
 
-    @Transactional(propagation=Propagation.REQUIRED)
+    @Transactional(propagation=Propagation.REQUIRED,rollbackFor = RuntimeException.class)
     public void transactionTestFailure() throws IllegalAccessException {
     	TUserDo u = new TUserDo();
         u.setUserId(13L);
         u.setAge(25);
         u.setName("war3 1.27 good");
+        u.setIsactive(true);
         tUserDoMapper.insert(u);
         
         TListingDo listingDo = new TListingDo();
         listingDo.setAmount(new BigDecimal(20));
-        listingDo.setDesc("pdl标的");
         listingDo.setUserId(22L);
+        listingDo.setListingId(10L);
+        listingDo.setIsactive(true);
         tListingDoMapper.insert(listingDo);
-        throw new IllegalAccessException();
+        throw new RuntimeException();
     }
     
 }
